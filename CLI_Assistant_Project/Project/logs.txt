@@ -1,0 +1,4 @@
+[21:01:21] Contact Ivanishenko has been added.
+[21:01:21] Addressbook has been saved!
+[21:09:03] Contact Oscar has been added.
+[21:09:03] Addressbook has been saved!
