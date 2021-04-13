@@ -1,0 +1,1 @@
+Here we describe the main operations with our CLI Project
