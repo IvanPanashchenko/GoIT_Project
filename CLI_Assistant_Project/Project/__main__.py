@@ -302,7 +302,7 @@ class Note(Field):
 if __name__ == "__main__":
 
     bot = BotInterface()
-    # bot.book.load("auto_save")
+    bot.book.load("auto_save")
     while True:
         action = (input("Choose wright action(add,search,edit,load,remove,save,congratulate,view): ")).strip()
         bot.handle(action)
