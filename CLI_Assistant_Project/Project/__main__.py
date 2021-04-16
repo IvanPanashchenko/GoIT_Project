@@ -36,11 +36,11 @@ class BotInterface:
             print(self.book.search(pattern))
         elif action == 'edit':
             contact_name = input('Contact name: ')
-            parameter = input('Parameter: ').strip()
+            parameter = input('Which parameter to edit(name, phone, birthday, status, email, note): ').strip()
             new_value = input("New Value: ")
             return self.book.edit(contact_name, parameter, new_value)
         elif action == 'remove':
-            pattern = input("Remove: ")
+            pattern = input("Remove (contact name or phone: ")
             return self.book.remove(pattern)
         elif action == 'save':
             file_name = input("File name: ")
@@ -157,8 +157,6 @@ class AddressBook(UserList):
                     new_value = new_value.split(' ')
                     for number in new_value:
                         number = Phone(number).value
-                elif parametr == 'status':
-                    new_value = Status(new_value).value
                 if parametr in account.keys():
                     account[parametr] = new_value
                 else:
