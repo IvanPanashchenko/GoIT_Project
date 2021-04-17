@@ -22,12 +22,10 @@ class BotInterface:
     def handle(self, action):
         if action == 'add':
             name = Name(input("Name: ")).value.strip()
-            phones = []
-            for number in input("Phone(s)(+48......... or +38..........): ").strip().split(' '):
-                phones.append(Phone(number).value)
-            birth = Birthday(input("Birthday date(dd/mm/YYYY): ")).value
-            email = Email(input("Email: ")).value.strip()
-            status = Status(input("Type of Relashionship(family, friend, work): ")).value.strip()
+            phones = Phone().value
+            birth = Birthday().value
+            email = Email().value.strip()
+            status = Status().value.strip()
             note = Note(input("Note: ")).value
             record = Record(name, phones, birth, email, status, note)
             return self.book.add(record)
@@ -40,7 +38,7 @@ class BotInterface:
             new_value = input("New Value: ")
             return self.book.edit(contact_name, parameter, new_value)
         elif action == 'remove':
-            pattern = input("Remove (contact name or phone: ")
+            pattern = input("Remove (contact name or phone): ")
             return self.book.remove(pattern)
         elif action == 'save':
             file_name = input("File name: ")
@@ -75,6 +73,8 @@ class AddressBook(UserList):
                     if number:
                         new_value.append(number)
                 phone = ', '.join(new_value)
+            else:
+                phone = ''
             result.append("_"*50+"\n"+f"Name: {account['name']} \nPhones: {phone} \nBirthday: {birth} \nEmail: {account['email']} \nStatus: {account['status']} \nNote: {account['note']}\n"+"_"*50 + '\n')
         return '\n'.join(result)
 
@@ -142,28 +142,40 @@ class AddressBook(UserList):
             for phone in account['phone(s)']:
                 if phone.lower().startswith(pattern.lower()):
                     result += "_"*50+"\n"+f"Name: {account['name']} \nPhones: {', '.join(account['phone(s)'])} \nBirthday: {birth} \nEmail: {account['email']} \nStatus: {account['status']} \nNote: {account['note']}\n"+"_"*50
+        if not result:
+            print('There is no such contact in address book!')
         return result
 
     def edit(self, contact_name, parametr, new_value):
-        for account in self.data:
-            if account['name'] == contact_name:
-                if parametr == 'birthday':
-                    new_value = Birthday(new_value).value
-                elif parametr == 'email':
-                    new_value = Email(new_value).value
-                elif parametr == 'status':
-                    new_value == Status(new_value).value
-                elif parametr == 'phone':
-                    new_value = new_value.split(' ')
-                    for number in new_value:
-                        number = Phone(number).value
-                if parametr in account.keys():
-                    account[parametr] = new_value
-                else:
-                    print('Incorrect parameter! Please provide correct parameter')
-            else:
-                print('There is no such contact in address book!')
-        log(f"Contact {contact_name.capitalize()} has been edited!")
+        names = []
+        try:
+            for account in self.data:
+                names.append(account['name'])
+                if account['name'] == contact_name:
+                    if parametr == 'birthday':
+                        new_value = Birthday(new_value).value
+                    elif parametr == 'email':
+                        new_value = Email(new_value).value
+                    elif parametr == 'status':
+                        new_value == Status(new_value).value
+                    elif parametr == 'phone':
+                        new_value = new_value.split(' ')
+                        for number in new_value:
+                            number = Phone(number).value
+                    if parametr in account.keys():
+                        account[parametr] = new_value
+                    elif parametr == 'phone':
+                        account['phone(s)'] = new_value
+                    else:
+                        raise ValueError
+            if contact_name not in names:    
+                raise NameError
+        except ValueError:
+            print('Incorrect parameter! Please provide correct parameter')
+        except NameError:
+            print('There is no such contact in address book!')
+        else:
+            log(f"Contact {contact_name} has been edited!")
 
     def remove(self, pattern):
         for account in self.data:
@@ -240,57 +252,79 @@ class Name(Field):
 
 class Phone(Field):
     
-    def __init__(self, value):
-        try:
-            if re.match('^\+48\d{9}$', value) or re.match('^\\+38\d{10}$', value) or value == '':
-                self.value = value
-            else: 
-                raise ValueError            
-        except ValueError:
-            self.value = ""
-            print('Incorrect phone number format! Please provide correct phone number format.')
+    def __init__(self, value=''):
+        while True:
+            self.value = []
+            if value:
+                self.values = value
+            else:
+                self.values = input("Phone(s)(+48......... or +38..........): ")
+            try:
+                for number in self.values.split(' '):
+                    if re.match('^\+48\d{9}$', number) or re.match('^\\+38\d{10}$', number) or number == '':
+                        self.value.append(number)
+                    else: 
+                        raise ValueError            
+            except ValueError:
+                print('Incorrect phone number format! Please provide correct phone number format.')
+            else:
+                break
 
 
 class Birthday(Field):
     
-    def __init__(self, value):
-        try:
-            if re.match('^\d{2}/\d{2}/\d{4}$', value):
-                self.value = datetime.strptime(value.strip(), "%d/%m/%Y")
-            elif value == '':
+    def __init__(self, value = ''):
+        while True:
+            if value:
                 self.value = value
             else:
-                raise ValueError
-        except ValueError:
-            self.value = ''
-            print('Incorrect date! Please provide correct date format.')
+                self.value = input("Birthday date(dd/mm/YYYY): ")
+            try:
+                if re.match('^\d{2}/\d{2}/\d{4}$', self.value):
+                    self.value = datetime.strptime(self.value.strip(), "%d/%m/%Y")
+                    break
+                elif self.value == '':
+                    break
+                else:
+                    raise ValueError
+            except ValueError:
+                print('Incorrect date! Please provide correct date format.')
 
 
 class Email(Field):
 
-    def __init__(self, value): 
-        try:
-            if re.match('^(\w|\.|\_|\-)+[@](\w|\_|\-|\.)+[.]\w{2,3}$', value) or value == '':
+    def __init__(self, value = ''):
+        while True:
+            
+            if value:
                 self.value = value
-            else: 
-                raise ValueError
-        except ValueError:
-            self.value = ""
-            print('Incorrect email! Please provide correct email.')
+            else:
+                self.value = input("Email: ")
+            try:
+                if re.match('^(\w|\.|\_|\-)+[@](\w|\_|\-|\.)+[.]\w{2,3}$', self.value) or self.value == '':
+                    break
+                else: 
+                    raise ValueError
+            except ValueError:
+                print('Incorrect email! Please provide correct email.')
 
 
 class Status(Field):
 
-    def __init__(self, value):
-        self.status_types = ['','family', 'friend', 'work']
-        try:
-            if value in self.status_types:
+    def __init__(self, value = ''):
+        while True:
+            self.status_types = ['','family', 'friend', 'work']
+            if value:
                 self.value = value
             else:
-                raise ValueError
-        except ValueError:
-            self.value = ''
-            print('There is no such status!')
+                self.value = input("Type of Relashionship(family, friend, work): ")
+            try:
+                if self.value in self.status_types:
+                    break
+                else:
+                    raise ValueError
+            except ValueError:
+                print('There is no such status!')
 
 
 class Note(Field):
